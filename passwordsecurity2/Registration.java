@@ -7,21 +7,33 @@
 package passwordsecurity2;
 
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
+
 import passwordsecurity2.Database.MyResult;
 
 
 public class Registration {
     protected static MyResult registracia(String meno, String heslo) throws NoSuchAlgorithmException, Exception{
-        if (Database.exist("hesla.txt", meno)){
-            System.out.println("Meno je uz zabrate.");
-            return new MyResult(false, "Meno je uz zabrate.");
+
+        List<User> users = User.all();
+
+        for(User user : users) {
+            if (user.name.equals(meno)) {
+                System.out.println("Meno je uz zabrate.");
+                return new MyResult(false, "Meno je uz zabrate.");
+            }
         }
-        else {
-            /*
-            *   Salt sa obvykle uklada ako tretia polozka v tvare [meno]:[heslo]:[salt].
-            */
-            Database.add("hesla.txt", meno + ":" + heslo);
-        }
+
+
+        Hasher hasher = new Hasher();
+        String salt = hasher.getSalt();
+
+        String hashedPass = hasher.hashPass(heslo, salt);
+
+        User user = new User(meno, hashedPass, salt);
+
+        User.create(user);
+
         return new MyResult(true, "");
     }
     
